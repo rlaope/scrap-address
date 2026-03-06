@@ -15,6 +15,7 @@ import re
 import sys
 import time
 from dataclasses import dataclass, asdict
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote
 
@@ -25,7 +26,7 @@ import pandas as pd
 
 DEFAULT_ADDRESS = "경기 안성시 공도읍 서동대로 4473-1"
 DEFAULT_RADIUS_KM = 30
-OUTPUT_DIR = Path(__file__).parent / "output"
+OUTPUT_DIR = Path(__file__).parent / "result"
 
 SEARCH_KEYWORDS = [
     "태권도",
@@ -501,7 +502,8 @@ def main():
     address = args.address
     radius_km = args.radius
     keywords = args.keywords or SEARCH_KEYWORDS
-    output_dir = Path(args.output) if args.output else OUTPUT_DIR
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_dir = Path(args.output) if args.output else OUTPUT_DIR / timestamp
 
     print("=" * 60)
     print("어린이 체육 학원 검색기 (API 키 불필요)")

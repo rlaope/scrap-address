@@ -13,6 +13,7 @@ import os
 import sys
 import time
 from dataclasses import dataclass, asdict
+from datetime import datetime
 from pathlib import Path
 
 import requests
@@ -20,7 +21,7 @@ import pandas as pd
 
 DEFAULT_ADDRESS = "경기 안성시 공도읍 서동대로 4473-1"
 DEFAULT_RADIUS_KM = 30
-OUTPUT_DIR = Path(__file__).parent / "output"
+OUTPUT_DIR = Path(__file__).parent / "result"
 
 SEARCH_KEYWORDS = [
     "태권도", "검도", "유도", "합기도", "무술", "체육관",
@@ -197,7 +198,8 @@ def main():
     address = args.address
     radius_km = args.radius
     keywords = args.keywords or SEARCH_KEYWORDS
-    output_dir = Path(args.output) if args.output else OUTPUT_DIR
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_dir = Path(args.output) if args.output else OUTPUT_DIR / timestamp
 
     print(f"기준: {address} / 반경: {radius_km}km")
 
