@@ -193,15 +193,17 @@ def main():
     parser.add_argument("--radius", "-r", type=float, default=DEFAULT_RADIUS_KM)
     parser.add_argument("--keywords", "-k", nargs="+", default=None)
     parser.add_argument("--output", "-o", default=None)
+    parser.add_argument("--max", "-m", type=int, default=0, help="최대 결과 수 (0=무제한)")
     args = parser.parse_args()
 
     address = args.address
     radius_km = args.radius
     keywords = args.keywords or SEARCH_KEYWORDS
+    max_results = args.max
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_dir = Path(args.output) if args.output else OUTPUT_DIR / timestamp
 
-    print(f"기준: {address} / 반경: {radius_km}km")
+    print(f"기준: {address} / 반경: {radius_km}km" + (f" / 최대: {max_results}개" if max_results else ""))
 
     api_key = load_api_key()
     client = KakaoLocalClient(api_key)
@@ -211,6 +213,9 @@ def main():
 
     print("[2/3] 학원 검색...")
     academies = search_academies(client, center_lat, center_lng, radius_km, keywords)
+
+    if max_results > 0:
+        academies = sorted(academies, key=lambda a: a.distance_km)[:max_results]
 
     print("[3/3] 저장...")
     save_results(academies, output_dir, address, radius_km)

@@ -493,6 +493,8 @@ def parse_args() -> argparse.Namespace:
                         help="검색 키워드 목록 (기본값: 태권도 검도 유도 등 13개)")
     parser.add_argument("--output", "-o", default=None,
                         help=f"결과 저장 디렉토리 (기본값: {OUTPUT_DIR})")
+    parser.add_argument("--max", "-m", type=int, default=0,
+                        help="최대 결과 수 (0=무제한)")
     return parser.parse_args()
 
 
@@ -502,6 +504,7 @@ def main():
     address = args.address
     radius_km = args.radius
     keywords = args.keywords or SEARCH_KEYWORDS
+    max_results = args.max
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_dir = Path(args.output) if args.output else OUTPUT_DIR / timestamp
 
@@ -510,6 +513,8 @@ def main():
     print(f"기준 주소: {address}")
     print(f"검색 반경: {radius_km}km")
     print(f"검색 키워드: {', '.join(keywords)}")
+    if max_results:
+        print(f"최대 결과: {max_results}개")
     print("=" * 60)
 
     # 1. 주소 → 좌표 변환
@@ -524,6 +529,9 @@ def main():
     # 2. 학원 검색
     print("\n[2/3] 체육 학원 검색 중...")
     academies = search_academies(center_lat, center_lng, radius_km, keywords)
+
+    if max_results > 0:
+        academies = sorted(academies, key=lambda a: a.distance_km)[:max_results]
 
     # 3. 결과 저장
     print("\n[3/3] 결과 저장 중...")
