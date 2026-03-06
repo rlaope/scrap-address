@@ -193,7 +193,7 @@ def main():
     parser.add_argument("--radius", "-r", type=float, default=DEFAULT_RADIUS_KM)
     parser.add_argument("--keywords", "-k", nargs="+", default=None)
     parser.add_argument("--output", "-o", default=None)
-    parser.add_argument("--max", "-m", type=int, default=0, help="최대 결과 수 (0=무제한)")
+    parser.add_argument("--max", "-m", type=int, default=500, help="최대 결과 수 (기본값: 500)")
     args = parser.parse_args()
 
     address = args.address

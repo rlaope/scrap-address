@@ -16,7 +16,8 @@ pip install -r requirements.txt
 python scraper.py
 python scraper.py --address "서울시 강남구 역삼동"
 python scraper.py --radius 15
-python scraper.py --address "수원시 팔달구" --radius 20
+python scraper.py --max 100
+python scraper.py --address "수원시 팔달구" --radius 20 --max 200
 python scraper.py --keywords 태권도 검도 유도
 ```
 
@@ -31,13 +32,24 @@ KAKAO_API_KEY=여기에_REST_API_키_입력
 ```bash
 python scraper_kakao.py
 python scraper_kakao.py --address "서울시 강남구 역삼동" --radius 20
+python scraper_kakao.py --max 100
 ```
 
 카카오 REST API 키는 https://developers.kakao.com 에서 앱 등록 후 발급
 
+## 옵션
+
+| 옵션 | 설명 | 기본값 |
+|------|------|--------|
+| `--address`, `-a` | 기준 주소 | 경기 안성시 공도읍 서동대로 4473-1 |
+| `--radius`, `-r` | 검색 반경 (km) | 30 |
+| `--max`, `-m` | 최대 결과 수 | 500 |
+| `--keywords`, `-k` | 검색 키워드 | 태권도 검도 유도 등 13개 |
+| `--output`, `-o` | 결과 저장 경로 | result/현재시간/ |
+
 ## 결과
 
-`output/` 폴더에 저장:
+`result/YYYYMMDD_HHMMSS/` 폴더에 저장:
 
 | 파일 | 형식 |
 |------|------|

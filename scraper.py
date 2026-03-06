@@ -493,8 +493,8 @@ def parse_args() -> argparse.Namespace:
                         help="검색 키워드 목록 (기본값: 태권도 검도 유도 등 13개)")
     parser.add_argument("--output", "-o", default=None,
                         help=f"결과 저장 디렉토리 (기본값: {OUTPUT_DIR})")
-    parser.add_argument("--max", "-m", type=int, default=0,
-                        help="최대 결과 수 (0=무제한)")
+    parser.add_argument("--max", "-m", type=int, default=500,
+                        help="최대 결과 수 (기본값: 500)")
     return parser.parse_args()
 
 
