@@ -1,5 +1,6 @@
 venv/
 output/
+result/
 .env
 __pycache__/
 *.pyc
