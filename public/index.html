@@ -263,6 +263,7 @@
       </div>
       <div class="progress-pct" id="progress-pct">0%</div>
       <div class="progress-detail" id="progress-detail"></div>
+      <button class="btn-retry" id="btn-cancel" onclick="cancelSearch()" style="margin-top:10px">취소</button>
     </div>
 
     <div class="result-area" id="result-area"></div>
@@ -672,6 +673,14 @@
       `;
       document.getElementById('btn-search').disabled = false;
     }
+    function cancelSearch() {
+      cancelled = true;
+      searching = false;
+      clearInterval(statusTimer);
+      document.getElementById('progress-area').classList.remove('show');
+      document.getElementById('btn-search').disabled = false;
+    }
+
     function resetSearch() {
       cancelled = true;
       searching = false;
