@@ -53,6 +53,7 @@ class Academy:
     category: str
     address: str
     road_address: str
+    detail_address: str
     phone: str
     latitude: float
     longitude: float
@@ -77,6 +78,28 @@ def haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 
 
 # ── 카카오맵 웹 스크래퍼 (API 키 불필요) ─────────────────────
+
+def fetch_detail_address(place_url: str) -> str:
+    """카카오맵 장소 상세 페이지에서 동/호수 포함 상세 주소를 추출."""
+    try:
+        # place_url에서 ID 추출
+        place_id = place_url.rstrip("/").split("/")[-1] if place_url else ""
+        if not place_id or not place_id.isdigit():
+            return ""
+        resp = requests.get(
+            f"https://place.map.kakao.com/{place_id}",
+            headers={
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+            },
+            timeout=5,
+        )
+        if resp.status_code != 200:
+            return ""
+        match = re.search(r'<meta\s+property="og:description"\s+content="([^"]+)"', resp.text)
+        return match.group(1) if match else ""
+    except Exception:
+        return ""
+
 
 class KakaoMapScraper:
     """카카오맵 웹 검색 API를 사용 (API 키 불필요)."""
@@ -314,6 +337,7 @@ def search_academies(
                         category=category,
                         address=addr,
                         road_address=doc.get("road_address", doc.get("road_address_name", "")),
+                        detail_address="",
                         phone=doc.get("phone", doc.get("tel", "")),
                         latitude=p_lat,
                         longitude=p_lng,
@@ -353,6 +377,7 @@ def search_academies(
                         category=category,
                         address=addr,
                         road_address=doc.get("roadAddress", ""),
+                        detail_address="",
                         phone=doc.get("tel", ""),
                         latitude=p_lat,
                         longitude=p_lng,
@@ -423,8 +448,8 @@ def save_results(
 
     df = pd.DataFrame([asdict(a) for a in sorted_academies])
     df.columns = [
-        "학원명", "카테고리", "지번주소", "도로명주소", "전화번호",
-        "위도", "경도", "거리(km)", "검색키워드", "링크",
+        "학원명", "카테고리", "지번주소", "도로명주소", "상세주소(동/호수)",
+        "전화번호", "위도", "경도", "거리(km)", "검색키워드", "링크",
     ]
 
     # CSV
@@ -533,8 +558,46 @@ def main():
     if max_results > 0:
         academies = sorted(academies, key=lambda a: a.distance_km)[:max_results]
 
-    # 3. 결과 저장
-    print("\n[3/3] 결과 저장 중...")
+    # 3. 상세 주소(동/호수) 조회
+    print("\n[3/4] 상세 주소(동/호수) 조회 중...")
+    enriched = []
+    for i, ac in enumerate(academies):
+        if ac.place_url:
+            print(f"\r  [{i+1}/{len(academies)}] {ac.name} 상세 주소 조회...", end="", flush=True)
+            full_addr = fetch_detail_address(ac.place_url)
+            detail = ""
+            if full_addr and ac.road_address:
+                base = ac.road_address.strip()
+                if full_addr.startswith(base):
+                    detail = full_addr[len(base):].strip()
+                elif base in full_addr:
+                    idx = full_addr.index(base)
+                    detail = full_addr[idx + len(base):].strip()
+                else:
+                    detail = full_addr
+            enriched.append(Academy(
+                name=ac.name, category=ac.category,
+                address=ac.address, road_address=ac.road_address,
+                detail_address=detail if detail else "동호수 정보 없음",
+                phone=ac.phone, latitude=ac.latitude, longitude=ac.longitude,
+                distance_km=ac.distance_km, search_keyword=ac.search_keyword,
+                place_url=ac.place_url,
+            ))
+            time.sleep(0.1)
+        else:
+            enriched.append(Academy(
+                name=ac.name, category=ac.category,
+                address=ac.address, road_address=ac.road_address,
+                detail_address="동호수 정보 없음",
+                phone=ac.phone, latitude=ac.latitude, longitude=ac.longitude,
+                distance_km=ac.distance_km, search_keyword=ac.search_keyword,
+                place_url=ac.place_url,
+            ))
+    print()
+    academies = enriched
+
+    # 4. 결과 저장
+    print("\n[4/4] 결과 저장 중...")
     save_results(academies, output_dir, address, radius_km)
 
 
