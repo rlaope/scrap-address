@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>쥬쥬핑 월드 (scrap)</title>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5eedc;
+      color: #3e2f1c;
+      min-height: 100vh;
+    }
+    .header {
+      background: #5c4033;
+      padding: 14px 0;
+      text-align: center;
+    }
+    .header h1 { font-size: 1.3rem; font-weight: 700; color: #f5eedc; }
+    .container { max-width: 520px; margin: 20px auto; padding: 0 16px; }
+    .field { margin-bottom: 12px; }
+    .field label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #7a6a52;
+      margin-bottom: 4px;
+    }
+    .input-row { display: flex; gap: 5px; align-items: center; }
+    .input-row input { flex: 1; }
+    input {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid #d5c9a8;
+      border-radius: 5px;
+      font-size: 0.85rem;
+      outline: none;
+      background: #fff;
+    }
+    input:focus { border-color: #d4a017; }
+    input[readonly] {
+      background: #efe8d6;
+      color: #6b5c43;
+      cursor: default;
+    }
+    input[readonly]:focus { border-color: #d5c9a8; }
+    input.editing {
+      background: #fff !important;
+      color: #3e2f1c !important;
+      border-color: #c9952a !important;
+    }
+    .btn-edit {
+      padding: 7px 12px;
+      border: 1px solid #d5c9a8;
+      border-radius: 5px;
+      background: #efe8d6;
+      cursor: pointer;
+      font-size: 0.78rem;
+      color: #8a6d1b;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .btn-edit:hover { background: #e6dcc4; }
+    .btn-edit.active { background: #c9952a; color: #fff; border-color: #c9952a; }
+    .row { display: flex; gap: 8px; }
+    .row .field { flex: 1; }
+    .keywords-box {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      padding: 8px;
+      border: 1px solid #d5c9a8;
+      border-radius: 5px;
+      min-height: 36px;
+      background: #faf6ec;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 8px;
+      background: #e8dcc0;
+      color: #5c4033;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 500;
+    }
+    .chip .remove {
+      cursor: pointer;
+      font-size: 0.85rem;
+      line-height: 1;
+      opacity: 0.5;
+    }
+    .chip .remove:hover { opacity: 1; }
+    .add-keyword { display: inline-flex; align-items: center; }
+    .add-keyword input {
+      width: 80px;
+      padding: 3px 7px;
+      border: 1px dashed #c5b896;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      background: #fff;
+    }
+    .btn-search {
+      width: 100%;
+      padding: 10px;
+      background: #5c4033;
+      color: #f5eedc;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-search:hover { background: #4a3328; }
+    .btn-search:disabled { opacity: 0.5; cursor: not-allowed; }
+    .progress-area {
+      display: none;
+      text-align: center;
+      padding: 16px 0;
+    }
+    .progress-area.show { display: block; }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid #d5c9a8;
+      border-top-color: #5c4033;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .progress-text {
+      font-size: 0.85rem;
+      color: #7a6a52;
+      animation: fadeIn 0.5s ease;
+    }
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: translateY(4px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .progress-bar-wrap {
+      width: 100%;
+      height: 6px;
+      background: #e0d6c0;
+      border-radius: 3px;
+      margin: 10px 0 4px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: #5c4033;
+      border-radius: 3px;
+      width: 0%;
+      transition: width 0.6s ease;
+    }
+    .progress-pct {
+      font-size: 0.78rem;
+      color: #5c4033;
+      font-weight: 700;
+    }
+    .progress-detail { font-size: 0.78rem; color: #a89878; margin-top: 4px; }
+    .result-area {
+      display: none;
+      text-align: center;
+      padding: 14px 0;
+    }
+    .result-area.show { display: block; }
+    .result-count {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #3e2f1c;
+      margin-bottom: 10px;
+    }
+    .btn-download {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 20px;
+      background: #5c4033;
+      color: #f5eedc;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn-download:hover { background: #4a3328; }
+    .error-text { color: #c0392b; font-weight: 600; font-size: 0.85rem; }
+    .btn-retry {
+      margin-top: 8px;
+      padding: 6px 16px;
+      background: #fff;
+      color: #5c4033;
+      border: 1px solid #5c4033;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-retry:hover { background: #efe8d6; }
+    .footer {
+      text-align: center;
+      padding: 16px;
+      font-size: 0.72rem;
+      color: #a89878;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>쥬쥬핑 월드 (scrap)</h1>
+  </div>
+
+  <div class="container">
+    <div class="field">
+      <label>기준 주소</label>
+      <div class="input-row">
+        <input type="text" id="address" value="경기 안성시 공도읍 서동대로 4473-1" readonly>
+        <button class="btn-edit" id="btn-addr-edit" onclick="toggleAddressEdit()">수정</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field" style="flex:0 0 120px">
+        <label>반경 (km)</label>
+        <input type="number" id="radius" value="30" min="1" max="100">
+      </div>
+      <div class="field" style="flex:0 0 120px">
+        <label>최대 결과 수</label>
+        <input type="number" id="max_results" value="500" min="1" max="5000">
+      </div>
+      <div class="field" style="flex:1"></div>
+    </div>
+
+    <div class="field">
+      <label>검색 키워드</label>
+      <div class="keywords-box" id="keywords-box">
+        <span class="chip" data-kw="태권도">태권도 <span class="remove" onclick="removeKeyword(this)">&times;</span></span>
+        <span class="chip" data-kw="검도">검도 <span class="remove" onclick="removeKeyword(this)">&times;</span></span>
+        <span class="chip" data-kw="유도">유도 <span class="remove" onclick="removeKeyword(this)">&times;</span></span>
+        <span class="chip" data-kw="합기도">합기도 <span class="remove" onclick="removeKeyword(this)">&times;</span></span>
+        <span class="chip" data-kw="무술">무술 <span class="remove" onclick="removeKeyword(this)">&times;</span></span>
+        <span class="chip" data-kw="체육관">체육관 <span class="remove" onclick="removeKeyword(this)">&times;</span></span>
+        <span class="chip" data-kw="어린이체육">어린이체육 <span class="remove" onclick="removeKeyword(this)">&times;</span></span>
+        <span class="chip" data-kw="키즈스포츠">키즈스포츠 <span class="remove" onclick="removeKeyword(this)">&times;</span></span>
+        <span class="chip" data-kw="축구교실">축구교실 <span class="remove" onclick="removeKeyword(this)">&times;</span></span>
+        <span class="chip" data-kw="수영">수영 <span class="remove" onclick="removeKeyword(this)">&times;</span></span>
+        <span class="chip" data-kw="체조">체조 <span class="remove" onclick="removeKeyword(this)">&times;</span></span>
+        <span class="chip" data-kw="발레">발레 <span class="remove" onclick="removeKeyword(this)">&times;</span></span>
+        <span class="chip" data-kw="방과후체육">방과후체육 <span class="remove" onclick="removeKeyword(this)">&times;</span></span>
+        <span class="add-keyword">
+          <input type="text" id="new-keyword" placeholder="+ 추가" onkeydown="addKeyword(event)">
+        </span>
+      </div>
+    </div>
+
+    <button class="btn-search" id="btn-search" onclick="startSearch()">검색 시작</button>
+
+    <div class="progress-area" id="progress-area">
+      <div class="spinner"></div>
+      <div class="progress-text" id="progress-text">검색 준비 중...</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <div class="progress-pct" id="progress-pct">0%</div>
+      <div class="progress-detail" id="progress-detail"></div>
+    </div>
+
+    <div class="result-area" id="result-area"></div>
+  </div>
+
+  <div class="footer">쥬쥬핑 월드 &copy; 2026</div>
+
+  <script>
+    // ── Config ──
+    const SPORTS_TERMS = [
+      '태권도','검도','유도','합기도','무술','무도','체육','체조','스포츠','수영',
+      '축구','농구','발레','댄스','체력','운동','키즈','어린이','피트니스','격투',
+      '권투','복싱','배드민턴','탁구','클라이밍','볼링','인라인','스케이트','짐','도장','관'
+    ];
+    const STATUS_MSGS = ['검색 중...', '스크랩 중...', '상세주소 검색 중...', '데이터 수집 중...'];
+    let statusIdx = 0, statusTimer = null, cancelled = false;
+
+    // ── UI ──
+    function toggleAddressEdit() {
+      const input = document.getElementById('address');
+      const btn = document.getElementById('btn-addr-edit');
+      if (input.readOnly) {
+        input.readOnly = false; input.classList.add('editing'); input.focus();
+        btn.textContent = '확인'; btn.classList.add('active');
+      } else {
+        input.readOnly = true; input.classList.remove('editing');
+        btn.textContent = '수정'; btn.classList.remove('active');
+      }
+    }
+    function removeKeyword(el) { el.parentElement.remove(); }
+    function addKeyword(e) {
+      if (e.key !== 'Enter') return;
+      const kw = e.target.value.trim();
+      if (!kw) return;
+      const chip = document.createElement('span');
+      chip.className = 'chip'; chip.dataset.kw = kw;
+      chip.innerHTML = kw + ' <span class="remove" onclick="removeKeyword(this)">&times;</span>';
+      document.querySelector('.add-keyword').before(chip);
+      e.target.value = '';
+    }
+    function getKeywords() {
+      return Array.from(document.querySelectorAll('.chip')).map(c => c.dataset.kw);
+    }
+    function setProgress(pct, detail) {
+      document.getElementById('progress-bar').style.width = pct + '%';
+      document.getElementById('progress-pct').textContent = pct + '%';
+      if (detail) document.getElementById('progress-detail').textContent = detail;
+    }
+    function rotateStatus() {
+      const el = document.getElementById('progress-text');
+      el.textContent = STATUS_MSGS[statusIdx % STATUS_MSGS.length];
+      el.style.animation = 'none'; el.offsetHeight; el.style.animation = '';
+      statusIdx++;
+    }
+
+    // ── API helpers ──
+    async function kakaoAPI(endpoint, params) {
+      const qs = new URLSearchParams({ type: 'api', endpoint, ...params });
+      const resp = await fetch('/.netlify/functions/kakao?' + qs);
+      return resp.json();
+    }
+    async function fetchPlaceDetail(placeId) {
+      const qs = new URLSearchParams({ type: 'place', id: placeId });
+      const resp = await fetch('/.netlify/functions/kakao?' + qs);
+      const data = await resp.json();
+      return data.description || '';
+    }
+
+    // ── Geo utils ──
+    function haversine(lat1, lon1, lat2, lon2) {
+      const R = 6371, toRad = n => n * Math.PI / 180;
+      const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+    function searchPoints(lat, lng, radiusKm) {
+      const pts = [{ lat, lng, label: '중심' }];
+      const offset = 15;
+      ['북','북동','남동','남','남서','북서'].forEach((d, i) => {
+        const angle = i * 60 * Math.PI / 180;
+        pts.push({
+          lat: lat + (offset / 111) * Math.cos(angle),
+          lng: lng + (offset / (111 * Math.cos(lat * Math.PI / 180))) * Math.sin(angle),
+          label: d,
+        });
+      });
+      return pts;
+    }
+    function isSportsAcademy(category, name, keyword) {
+      const text = category + ' ' + name;
+      if (['체육','스포츠','무도','무술'].some(t => category.includes(t))) return true;
+      if (SPORTS_TERMS.some(t => text.includes(t))) return true;
+      return text.includes(keyword);
+    }
+
+    // ── Main search ──
+    async function startSearch() {
+      const address = document.getElementById('address').value.trim();
+      const radiusKm = parseFloat(document.getElementById('radius').value) || 30;
+      const maxResults = parseInt(document.getElementById('max_results').value) || 500;
+      const keywords = getKeywords();
+      if (!address) { alert('주소를 입력해주세요.'); return; }
+      if (!keywords.length) { alert('키워드를 1개 이상 입력해주세요.'); return; }
+
+      cancelled = false;
+      document.getElementById('btn-search').disabled = true;
+      document.getElementById('progress-area').classList.add('show');
+      document.getElementById('result-area').classList.remove('show');
+      document.getElementById('result-area').innerHTML = '';
+      setProgress(0, '');
+      statusIdx = 0; rotateStatus();
+      statusTimer = setInterval(rotateStatus, 2500);
+
+      try {
+        // 1. Geocode (3%)
+        setProgress(3, '좌표 변환 중...');
+        const geo = await kakaoAPI('search/address.json', { query: address });
+        if (!geo.documents || !geo.documents.length) throw new Error('주소를 찾을 수 없습니다.');
+        const centerLat = parseFloat(geo.documents[0].y);
+        const centerLng = parseFloat(geo.documents[0].x);
+
+        // 2. Search (5~35%)
+        setProgress(5, '학원 검색 중...');
+        const points = searchPoints(centerLat, centerLng, radiusKm);
+        const seen = new Set();
+        let results = [];
+        const totalSteps = keywords.length * points.length;
+        let step = 0;
+
+        for (const keyword of keywords) {
+          if (cancelled) break;
+          for (const pt of points) {
+            if (cancelled) break;
+            step++;
+            const pct = 5 + Math.round((step / totalSteps) * 30);
+            setProgress(pct, `'${keyword}' 검색 중 (${pt.label})...`);
+
+            for (let page = 1; page <= 5; page++) {
+              try {
+                const data = await kakaoAPI('search/keyword.json', {
+                  query: keyword, y: pt.lat, x: pt.lng,
+                  radius: 20000, sort: 'distance', page, size: 15,
+                });
+                const docs = data.documents || [];
+                if (!docs.length) break;
+
+                for (const doc of docs) {
+                  if (seen.has(doc.id)) continue;
+                  seen.add(doc.id);
+                  const pLat = parseFloat(doc.y), pLng = parseFloat(doc.x);
+                  const dist = haversine(centerLat, centerLng, pLat, pLng);
+                  if (dist > radiusKm) continue;
+                  if (!isSportsAcademy(doc.category_name || '', doc.place_name || '', keyword)) continue;
+                  results.push({
+                    name: doc.place_name || '', category: doc.category_name || '',
+                    address: doc.address_name || '', road_address: doc.road_address_name || '',
+                    detail_address: '', phone: doc.phone || '', zip_code: '',
+                    distance_km: Math.round(dist * 100) / 100,
+                    search_keyword: keyword, place_url: doc.place_url || '',
+                    place_id: (doc.place_url || '').split('/').pop(),
+                  });
+                }
+                if (data.meta && data.meta.is_end) break;
+              } catch { break; }
+              await sleep(100);
+            }
+            await sleep(100);
+          }
+        }
+
+        // Sort and limit
+        results.sort((a, b) => a.distance_km - b.distance_km);
+        if (maxResults > 0) results = results.slice(0, maxResults);
+
+        // 3. Enrich: detail address + zip code (35~92%)
+        const total = results.length;
+        for (let i = 0; i < total; i++) {
+          if (cancelled) break;
+          const pct = 35 + Math.round(((i + 1) / total) * 57);
+          setProgress(pct, `상세 정보 조회 중... (${i + 1}/${total})`);
+          const r = results[i];
+
+          // Zip code
+          if (r.road_address) {
+            try {
+              const addrData = await kakaoAPI('search/address.json', { query: r.road_address });
+              const docs = addrData.documents || [];
+              if (docs.length && docs[0].road_address) {
+                r.zip_code = docs[0].road_address.zone_no || '';
+              }
+            } catch {}
+          }
+
+          // Detail address
+          if (r.place_id) {
+            try {
+              const fullAddr = await fetchPlaceDetail(r.place_id);
+              if (fullAddr && r.road_address) {
+                const base = r.road_address.trim();
+                if (fullAddr.startsWith(base)) {
+                  r.detail_address = fullAddr.slice(base.length).trim();
+                } else if (fullAddr.includes(base)) {
+                  r.detail_address = fullAddr.slice(fullAddr.indexOf(base) + base.length).trim();
+                } else {
+                  r.detail_address = fullAddr;
+                }
+              }
+            } catch {}
+          }
+          if (!r.detail_address) r.detail_address = '동호수 정보 없음';
+          await sleep(80);
+        }
+
+        // 4. Generate Excel (92~100%)
+        setProgress(92, '엑셀 파일 생성 중...');
+        const rows = results.map(r => ({
+          '학원명': r.name, '카테고리': r.category, '지번주소': r.address,
+          '도로명주소': r.road_address, '상세주소': r.detail_address,
+          '전화번호': r.phone, '우편번호': r.zip_code,
+          '링크': r.place_url, '검색키워드': r.search_keyword,
+        }));
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, '체육학원목록');
+
+        // Column widths
+        ws['!cols'] = [
+          { wch: 20 }, { wch: 30 }, { wch: 30 }, { wch: 30 },
+          { wch: 20 }, { wch: 15 }, { wch: 8 }, { wch: 40 }, { wch: 10 },
+        ];
+
+        setProgress(100, '완료!');
+        clearInterval(statusTimer);
+
+        // Download
+        XLSX.writeFile(wb, '체육학원_검색결과.xlsx');
+        showResult(results.length);
+
+      } catch (err) {
+        clearInterval(statusTimer);
+        document.getElementById('progress-area').classList.remove('show');
+        showError('오류: ' + err.message);
+      }
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    function showResult(count) {
+      document.getElementById('progress-area').classList.remove('show');
+      const area = document.getElementById('result-area');
+      area.classList.add('show');
+      area.innerHTML = `
+        <div class="result-count">${count}개 학원 검색 완료</div>
+        <button class="btn-retry" onclick="resetSearch()">새 검색</button>
+      `;
+      document.getElementById('btn-search').disabled = false;
+    }
+    function showError(msg) {
+      const area = document.getElementById('result-area');
+      area.classList.add('show');
+      area.innerHTML = `
+        <div class="error-text">${msg}</div>
+        <button class="btn-retry" onclick="resetSearch()">다시 시도</button>
+      `;
+      document.getElementById('btn-search').disabled = false;
+    }
+    function resetSearch() {
+      cancelled = true;
+      document.getElementById('result-area').classList.remove('show');
+      document.getElementById('result-area').innerHTML = '';
+      document.getElementById('progress-area').classList.remove('show');
+      document.getElementById('btn-search').disabled = false;
+    }
+  </script>
+</body>
+</html>
