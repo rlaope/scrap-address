@@ -458,9 +458,7 @@
                 if (enough) break;
                 if (data.meta && data.meta.is_end) break;
               } catch { break; }
-              await sleep(30);
             }
-            await sleep(20);
           }
         }
 
@@ -468,35 +466,39 @@
         results.sort((a, b) => a.distance_km - b.distance_km);
         results = results.slice(0, maxResults);
 
-        // 3. Enrich
+        // 3. Enrich (5개씩 병렬 처리)
         const total = results.length;
-        for (let i = 0; i < total; i++) {
+        let enriched = 0;
+        const BATCH = 5;
+        for (let i = 0; i < total; i += BATCH) {
           if (cancelled) break;
-          const pct = 35 + Math.round(((i + 1) / total) * 57);
-          setProgress(pct, `상세 정보 조회 중... (${i + 1}/${total})`);
-          const r = results[i];
-          if (r.road_address) {
-            try {
-              const addrData = await kakaoAPI('search/address.json', { query: r.road_address });
-              const docs = addrData.documents || [];
-              if (docs.length && docs[0].road_address) {
-                r.zip_code = docs[0].road_address.zone_no || '';
-              }
-            } catch {}
-          }
-          if (r.place_id) {
-            try {
-              const fullAddr = await fetchPlaceDetail(r.place_id);
-              if (fullAddr && r.road_address) {
-                const base = r.road_address.trim();
-                if (fullAddr.startsWith(base)) r.detail_address = fullAddr.slice(base.length).trim();
-                else if (fullAddr.includes(base)) r.detail_address = fullAddr.slice(fullAddr.indexOf(base) + base.length).trim();
-                else r.detail_address = fullAddr;
-              }
-            } catch {}
-          }
-          if (!r.detail_address) r.detail_address = '동호수 정보 없음';
-          await sleep(20);
+          const batch = results.slice(i, Math.min(i + BATCH, total));
+          await Promise.all(batch.map(async (r) => {
+            if (r.road_address) {
+              try {
+                const addrData = await kakaoAPI('search/address.json', { query: r.road_address });
+                const docs = addrData.documents || [];
+                if (docs.length && docs[0].road_address) {
+                  r.zip_code = docs[0].road_address.zone_no || '';
+                }
+              } catch {}
+            }
+            if (r.place_id) {
+              try {
+                const fullAddr = await fetchPlaceDetail(r.place_id);
+                if (fullAddr && r.road_address) {
+                  const base = r.road_address.trim();
+                  if (fullAddr.startsWith(base)) r.detail_address = fullAddr.slice(base.length).trim();
+                  else if (fullAddr.includes(base)) r.detail_address = fullAddr.slice(fullAddr.indexOf(base) + base.length).trim();
+                  else r.detail_address = fullAddr;
+                }
+              } catch {}
+            }
+            if (!r.detail_address) r.detail_address = '동호수 정보 없음';
+          }));
+          enriched += batch.length;
+          const pct = 35 + Math.round((enriched / total) * 57);
+          setProgress(pct, `상세 정보 조회 중... (${enriched}/${total})`);
         }
 
         setProgress(100, '완료!');
