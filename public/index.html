@@ -546,11 +546,13 @@
       const ws = wb.addWorksheet('라벨', {
         pageSetup: {
           paperSize: 9,
-          orientation: 'portrait',
-          fitToPage: false,
+          orientation: 'landscape',
+          fitToPage: true,
+          fitToWidth: 1,
+          fitToHeight: 0,
           margins: {
-            left: 1.91 / 2.54, right: 1.91 / 2.54,
-            top: 1.91 / 2.54, bottom: 1.91 / 2.54,
+            left: 0.5 / 2.54, right: 0.5 / 2.54,
+            top: 0.5 / 2.54, bottom: 0.5 / 2.54,
             header: 0, footer: 0,
           },
         },
