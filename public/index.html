@@ -328,7 +328,10 @@
     function getKeywords() {
       return Array.from(document.querySelectorAll('.chip')).map(c => c.dataset.kw);
     }
+    let lastPct = 0;
     function setProgress(pct, detail) {
+      if (pct < lastPct && pct < 100) return; // 역행 방지
+      lastPct = pct;
       document.getElementById('progress-bar').style.width = pct + '%';
       document.getElementById('progress-pct').textContent = pct + '%';
       if (detail) document.getElementById('progress-detail').textContent = detail;
@@ -396,6 +399,7 @@
       document.getElementById('result-area').innerHTML = '';
       document.getElementById('progress-bar').style.width = '0%';
       document.getElementById('progress-pct').textContent = '0%';
+      lastPct = 0;
       document.getElementById('progress-detail').textContent = '';
       statusIdx = 0; rotateStatus();
       statusTimer = setInterval(rotateStatus, 2500);
