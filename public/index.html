@@ -560,7 +560,7 @@
       ws.getColumn(2).width = 3;
       ws.getColumn(3).width = 48;
 
-      const BLOCK = 4; // 3 content rows + 1 gap row
+      const BLOCK = 5; // 4 content rows + 1 gap row
       const thick = { style: 'medium', color: { argb: 'FF000000' } };
       const font14 = { name: '맑은 고딕', size: 14 };
       const font14b = { name: '맑은 고딕', size: 14, bold: true };
@@ -569,19 +569,20 @@
         const block = Math.floor(i / 2);
         const sr = block * BLOCK + 1;
 
-        ws.getRow(sr).height = 25;
-        ws.getRow(sr + 1).height = 30;
-        ws.getRow(sr + 2).height = 25;
-        ws.getRow(sr + 3).height = 10; // gap
+        ws.getRow(sr).height = 25;     // 받는 사람
+        ws.getRow(sr + 1).height = 30;  // 도로명주소
+        ws.getRow(sr + 2).height = 25;  // 원명
+        ws.getRow(sr + 3).height = 25;  // 우편번호
+        ws.getRow(sr + 4).height = 10;  // gap
 
         // Left label
         fillLabel(ws, sr, 1, searchResults[i], font14, font14b);
-        applyBorder(ws, sr, sr + 2, 1, 1, thick);
+        applyBorder(ws, sr, sr + 3, 1, 1, thick);
 
         // Right label
         if (i + 1 < searchResults.length) {
           fillLabel(ws, sr, 3, searchResults[i + 1], font14, font14b);
-          applyBorder(ws, sr, sr + 2, 3, 3, thick);
+          applyBorder(ws, sr, sr + 3, 3, 3, thick);
         }
       }
 
@@ -599,20 +600,26 @@
       const font11 = { name: '맑은 고딕', size: 11 };
       const font11b = { name: '맑은 고딕', size: 11, bold: true };
 
-      // Row sr: 도로명주소
-      const c1 = ws.getCell(sr, col);
+      // Row sr: 받는 사람 (14pt bold)
+      const c0 = ws.getCell(sr, col);
+      c0.value = '받는 사람';
+      c0.font = font14b;
+      c0.alignment = { horizontal: 'left', vertical: 'middle' };
+
+      // Row sr+1: 도로명주소
+      const c1 = ws.getCell(sr + 1, col);
       c1.value = addr || '';
       c1.font = font11;
       c1.alignment = { wrapText: true, vertical: 'middle' };
 
-      // Row sr+1: 원명
-      const c2 = ws.getCell(sr + 1, col);
+      // Row sr+2: 원명
+      const c2 = ws.getCell(sr + 2, col);
       c2.value = data.name || '';
       c2.font = font11b;
       c2.alignment = { horizontal: 'left', vertical: 'middle' };
 
-      // Row sr+2: 우편번호
-      const c3 = ws.getCell(sr + 2, col);
+      // Row sr+3: 우편번호
+      const c3 = ws.getCell(sr + 3, col);
       c3.value = zip ? `(${zip})` : '';
       c3.font = font11;
       c3.alignment = { horizontal: 'left', vertical: 'middle' };
