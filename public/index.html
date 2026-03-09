@@ -560,48 +560,39 @@
         },
       });
 
-      // 열 너비: A,C=0.4cm(≈1.5), B=9cm(≈36), D,F=0.4cm, E=9cm(≈36)
-      ws.getColumn(1).width = 1.5;  // A (border)
-      ws.getColumn(2).width = 36;   // B (content)
-      ws.getColumn(3).width = 1.5;  // C (border)
-      ws.getColumn(4).width = 1.5;  // D (border)
-      ws.getColumn(5).width = 36;   // E (content)
-      ws.getColumn(6).width = 1.5;  // F (border)
+      // A열, B열만 사용 (2개 라벨). 간격은 가운데 빈 공간으로
+      ws.getColumn(1).width = 40;
+      ws.getColumn(2).width = 4;  // gap
+      ws.getColumn(3).width = 40;
 
       const thick = { style: 'medium', color: { argb: 'FF000000' } };
       const font14 = { name: '맑은 고딕', size: 14 };
       const font14b = { name: '맑은 고딕', size: 14, bold: true };
-      const fontGuide = { name: '맑은 고딕', size: 8, color: { argb: 'FF999999' } };
 
-      // 블록: 6행 (1:gap, 2:받는사람, 3:주소, 4:원명, 5:padding, 6:우편번호)
-      // 8블록 = 48행 per page, 2열 x 8행 = 16 labels per page
-      const BLOCK = 6;
+      // 블록: 4행 (받는사람, 주소, 원명, 우편번호) + 1행 gap = 5행
+      const BLOCK = 5;
 
       for (let i = 0; i < searchResults.length; i += 2) {
         const block = Math.floor(i / 2);
         const sr = block * BLOCK + 1;
 
-        // 행 높이
-        ws.getRow(sr).height = 5.67;      // row1: 0.2cm gap
-        ws.getRow(sr + 1).height = 20;    // row2: 받는 사람
-        ws.getRow(sr + 2).height = 20;    // row3: 도로명주소
-        ws.getRow(sr + 3).height = 20;    // row4: 원명
-        ws.getRow(sr + 4).height = 11.34; // row5: 0.4cm padding
-        ws.getRow(sr + 5).height = 20;    // row6: 우편번호 (originally missing - now included in border)
+        for (let r = 0; r < 4; r++) ws.getRow(sr + r).height = 20;
+        ws.getRow(sr + 4).height = 6; // gap
 
-        // Wait, the spec says border on rows 2-6 (sr+1 to sr+5)
-        // But row 5 is padding and row 6 is 우편번호
-        // Let me re-check: rows 2,3,4 are text, row 5 is padding, row 6 is text
-        // Border encompasses rows 2-6 (sr+1 to sr+5)
+        // Left label (A열)
+        fillLabel(ws, sr, 1, searchResults[i], font14, font14b);
+        applyLabelBorder(ws, sr, sr + 3, 1, 1, thick);
 
-        // Left label (B열)
-        fillLabel(ws, sr, 2, searchResults[i], font14, font14b, fontGuide);
-        applyLabelBorder(ws, sr + 1, sr + 5, 1, 3, thick);
-
-        // Right label (E열)
+        // Right label (C열)
         if (i + 1 < searchResults.length) {
-          fillLabel(ws, sr, 5, searchResults[i + 1], font14, font14b, fontGuide);
-          applyLabelBorder(ws, sr + 1, sr + 5, 4, 6, thick);
+          fillLabel(ws, sr, 3, searchResults[i + 1], font14, font14b);
+          applyLabelBorder(ws, sr, sr + 3, 3, 3, thick);
+        }
+
+        // 8블록(16라벨)마다 페이지 나누기
+        const labelIdx = Math.floor(i / 2) + 1;
+        if (labelIdx % 8 === 0 && i + 2 < searchResults.length) {
+          ws.getRow(sr + 4).addPageBreak();
         }
       }
 
@@ -613,41 +604,33 @@
       URL.revokeObjectURL(url);
     }
 
-    function fillLabel(ws, sr, col, data, font14, font14b, fontGuide) {
+    function fillLabel(ws, sr, col, data, font14, font14b) {
       const addr = data.road_address + (data.detail_address && data.detail_address !== '동호수 정보 없음' ? ' ' + data.detail_address : '');
       const zip = data.zip_code ? String(data.zip_code).replace('.0', '') : '';
 
-      // Row sr+1 (row2): 받는 사람 (bold, left)
+      // Row sr: 받는 사람
+      const c0 = ws.getCell(sr, col);
+      c0.value = '받는 사람';
+      c0.font = font14b;
+      c0.alignment = { horizontal: 'left', vertical: 'middle' };
+
+      // Row sr+1: 도로명주소
       const c1 = ws.getCell(sr + 1, col);
-      c1.value = '받는 사람';
-      c1.font = font14b;
-      c1.alignment = { horizontal: 'left', vertical: 'middle' };
+      c1.value = addr || '';
+      c1.font = font14;
+      c1.alignment = { wrapText: true, horizontal: 'right', vertical: 'middle' };
 
-      // Row sr+2 (row3): 도로명주소 + 가이드
+      // Row sr+2: 원명
       const c2 = ws.getCell(sr + 2, col);
-      c2.value = { richText: [
-        { font: font14, text: addr || '' },
-        { font: fontGuide, text: '  도로명주소' },
-      ]};
-      c2.alignment = { wrapText: true, horizontal: 'right', vertical: 'middle' };
+      c2.value = data.name || '';
+      c2.font = font14;
+      c2.alignment = { horizontal: 'right', vertical: 'middle' };
 
-      // Row sr+3 (row4): 원명 + 가이드
+      // Row sr+3: 우편번호
       const c3 = ws.getCell(sr + 3, col);
-      c3.value = { richText: [
-        { font: font14, text: data.name || '' },
-        { font: fontGuide, text: '  원명' },
-      ]};
+      c3.value = zip;
+      c3.font = font14;
       c3.alignment = { horizontal: 'right', vertical: 'middle' };
-
-      // Row sr+4 (row5): 내부 여백 (빈 행)
-
-      // Row sr+5 (row6): 우편번호 + 가이드
-      const c5 = ws.getCell(sr + 5, col);
-      c5.value = { richText: [
-        { font: font14, text: zip },
-        { font: fontGuide, text: '  우편번호' },
-      ]};
-      c5.alignment = { horizontal: 'right', vertical: 'middle' };
     }
 
     function applyLabelBorder(ws, rowStart, rowEnd, colStart, colEnd, borderStyle) {
