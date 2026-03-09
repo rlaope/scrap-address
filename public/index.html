@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>쥬쥬핑 월드 (scrap)</title>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -155,11 +156,7 @@
       width: 0%;
       transition: width 0.6s ease;
     }
-    .progress-pct {
-      font-size: 0.78rem;
-      color: #5c4033;
-      font-weight: 700;
-    }
+    .progress-pct { font-size: 0.78rem; color: #5c4033; font-weight: 700; }
     .progress-detail { font-size: 0.78rem; color: #a89878; margin-top: 4px; }
     .result-area {
       display: none;
@@ -167,27 +164,25 @@
       padding: 14px 0;
     }
     .result-area.show { display: block; }
-    .result-count {
-      font-size: 1rem;
-      font-weight: 700;
-      color: #3e2f1c;
-      margin-bottom: 10px;
-    }
+    .result-count { font-size: 1rem; font-weight: 700; color: #3e2f1c; margin-bottom: 10px; }
+    .btn-group { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
     .btn-download {
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      padding: 8px 20px;
+      padding: 8px 16px;
       background: #5c4033;
       color: #f5eedc;
       border: none;
       border-radius: 5px;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 600;
       cursor: pointer;
       text-decoration: none;
     }
     .btn-download:hover { background: #4a3328; }
+    .btn-download.label-btn { background: #8a6d1b; }
+    .btn-download.label-btn:hover { background: #6b5510; }
     .error-text { color: #c0392b; font-weight: 600; font-size: 0.85rem; }
     .btn-retry {
       margin-top: 8px;
@@ -276,14 +271,35 @@
   <div class="footer">쥬쥬핑 월드 &copy; 2026</div>
 
   <script>
-    // ── Config ──
     const SPORTS_TERMS = [
       '태권도','검도','유도','합기도','무술','무도','체육','체조','스포츠','수영',
       '축구','농구','발레','댄스','체력','운동','키즈','어린이','피트니스','격투',
       '권투','복싱','배드민턴','탁구','클라이밍','볼링','인라인','스케이트','짐','도장','관'
     ];
     const STATUS_MSGS = ['검색 중...', '스크랩 중...', '상세주소 검색 중...', '데이터 수집 중...'];
-    let statusIdx = 0, statusTimer = null, cancelled = false;
+    let statusIdx = 0, statusTimer = null, cancelled = false, searching = false;
+    let searchResults = []; // 전역 결과 저장
+
+    // ── 새로고침 방지 ──
+    window.addEventListener('beforeunload', (e) => {
+      if (searching) {
+        e.preventDefault();
+        e.returnValue = '검색이 진행 중입니다. 페이지를 떠나시겠습니까?';
+      }
+    });
+
+    // ── 페이지 로드 시 이전 결과 복원 ──
+    window.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem('scrap_results');
+      if (saved) {
+        try {
+          searchResults = JSON.parse(saved);
+          if (searchResults.length > 0) {
+            showResult(searchResults.length);
+          }
+        } catch {}
+      }
+    });
 
     // ── UI ──
     function toggleAddressEdit() {
@@ -323,7 +339,7 @@
       statusIdx++;
     }
 
-    // ── API helpers ──
+    // ── API ──
     async function kakaoAPI(endpoint, params) {
       const qs = new URLSearchParams({ type: 'api', endpoint, ...params });
       const resp = await fetch('/.netlify/functions/kakao?' + qs);
@@ -336,21 +352,20 @@
       return data.description || '';
     }
 
-    // ── Geo utils ──
+    // ── Geo ──
     function haversine(lat1, lon1, lat2, lon2) {
       const R = 6371, toRad = n => n * Math.PI / 180;
       const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
       const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
       return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
-    function searchPoints(lat, lng, radiusKm) {
+    function searchPoints(lat, lng) {
       const pts = [{ lat, lng, label: '중심' }];
-      const offset = 15;
       ['북','북동','남동','남','남서','북서'].forEach((d, i) => {
         const angle = i * 60 * Math.PI / 180;
         pts.push({
-          lat: lat + (offset / 111) * Math.cos(angle),
-          lng: lng + (offset / (111 * Math.cos(lat * Math.PI / 180))) * Math.sin(angle),
+          lat: lat + (15 / 111) * Math.cos(angle),
+          lng: lng + (15 / (111 * Math.cos(lat * Math.PI / 180))) * Math.sin(angle),
           label: d,
         });
       });
@@ -373,37 +388,42 @@
       if (!keywords.length) { alert('키워드를 1개 이상 입력해주세요.'); return; }
 
       cancelled = false;
+      searching = true;
       document.getElementById('btn-search').disabled = true;
       document.getElementById('progress-area').classList.add('show');
       document.getElementById('result-area').classList.remove('show');
       document.getElementById('result-area').innerHTML = '';
-      setProgress(0, '');
+      document.getElementById('progress-bar').style.width = '0%';
+      document.getElementById('progress-pct').textContent = '0%';
+      document.getElementById('progress-detail').textContent = '';
       statusIdx = 0; rotateStatus();
       statusTimer = setInterval(rotateStatus, 2500);
 
       try {
-        // 1. Geocode (3%)
+        // 1. Geocode
         setProgress(3, '좌표 변환 중...');
         const geo = await kakaoAPI('search/address.json', { query: address });
         if (!geo.documents || !geo.documents.length) throw new Error('주소를 찾을 수 없습니다.');
         const centerLat = parseFloat(geo.documents[0].y);
         const centerLng = parseFloat(geo.documents[0].x);
 
-        // 2. Search (5~35%)
+        // 2. Search - 충분한 결과 수집 시 조기 종료
         setProgress(5, '학원 검색 중...');
-        const points = searchPoints(centerLat, centerLng, radiusKm);
+        const points = searchPoints(centerLat, centerLng);
         const seen = new Set();
         let results = [];
         const totalSteps = keywords.length * points.length;
+        const collectLimit = maxResults * 2; // 정렬 전 여유분
         let step = 0;
+        let enough = false;
 
         for (const keyword of keywords) {
-          if (cancelled) break;
+          if (cancelled || enough) break;
           for (const pt of points) {
-            if (cancelled) break;
+            if (cancelled || enough) break;
             step++;
             const pct = 5 + Math.round((step / totalSteps) * 30);
-            setProgress(pct, `'${keyword}' 검색 중 (${pt.label})...`);
+            setProgress(pct, `'${keyword}' 검색 중 (${pt.label})... [${results.length}건]`);
 
             for (let page = 1; page <= 5; page++) {
               try {
@@ -413,7 +433,6 @@
                 });
                 const docs = data.documents || [];
                 if (!docs.length) break;
-
                 for (const doc of docs) {
                   if (seen.has(doc.id)) continue;
                   seen.add(doc.id);
@@ -429,28 +448,28 @@
                     search_keyword: keyword, place_url: doc.place_url || '',
                     place_id: (doc.place_url || '').split('/').pop(),
                   });
+                  if (results.length >= collectLimit) { enough = true; break; }
                 }
+                if (enough) break;
                 if (data.meta && data.meta.is_end) break;
               } catch { break; }
               await sleep(100);
             }
-            await sleep(100);
+            await sleep(50);
           }
         }
 
         // Sort and limit
         results.sort((a, b) => a.distance_km - b.distance_km);
-        if (maxResults > 0) results = results.slice(0, maxResults);
+        results = results.slice(0, maxResults);
 
-        // 3. Enrich: detail address + zip code (35~92%)
+        // 3. Enrich
         const total = results.length;
         for (let i = 0; i < total; i++) {
           if (cancelled) break;
           const pct = 35 + Math.round(((i + 1) / total) * 57);
           setProgress(pct, `상세 정보 조회 중... (${i + 1}/${total})`);
           const r = results[i];
-
-          // Zip code
           if (r.road_address) {
             try {
               const addrData = await kakaoAPI('search/address.json', { query: r.road_address });
@@ -460,20 +479,14 @@
               }
             } catch {}
           }
-
-          // Detail address
           if (r.place_id) {
             try {
               const fullAddr = await fetchPlaceDetail(r.place_id);
               if (fullAddr && r.road_address) {
                 const base = r.road_address.trim();
-                if (fullAddr.startsWith(base)) {
-                  r.detail_address = fullAddr.slice(base.length).trim();
-                } else if (fullAddr.includes(base)) {
-                  r.detail_address = fullAddr.slice(fullAddr.indexOf(base) + base.length).trim();
-                } else {
-                  r.detail_address = fullAddr;
-                }
+                if (fullAddr.startsWith(base)) r.detail_address = fullAddr.slice(base.length).trim();
+                else if (fullAddr.includes(base)) r.detail_address = fullAddr.slice(fullAddr.indexOf(base) + base.length).trim();
+                else r.detail_address = fullAddr;
               }
             } catch {}
           }
@@ -481,33 +494,19 @@
           await sleep(80);
         }
 
-        // 4. Generate Excel (92~100%)
-        setProgress(92, '엑셀 파일 생성 중...');
-        const rows = results.map(r => ({
-          '학원명': r.name, '카테고리': r.category, '지번주소': r.address,
-          '도로명주소': r.road_address, '상세주소': r.detail_address,
-          '전화번호': r.phone, '우편번호': r.zip_code,
-          '링크': r.place_url, '검색키워드': r.search_keyword,
-        }));
-        const ws = XLSX.utils.json_to_sheet(rows);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, '체육학원목록');
-
-        // Column widths
-        ws['!cols'] = [
-          { wch: 20 }, { wch: 30 }, { wch: 30 }, { wch: 30 },
-          { wch: 20 }, { wch: 15 }, { wch: 8 }, { wch: 40 }, { wch: 10 },
-        ];
-
         setProgress(100, '완료!');
         clearInterval(statusTimer);
+        searching = false;
 
-        // Download
-        XLSX.writeFile(wb, '체육학원_검색결과.xlsx');
+        // 결과 저장 (localStorage)
+        searchResults = results;
+        localStorage.setItem('scrap_results', JSON.stringify(results));
+
         showResult(results.length);
 
       } catch (err) {
         clearInterval(statusTimer);
+        searching = false;
         document.getElementById('progress-area').classList.remove('show');
         showError('오류: ' + err.message);
       }
@@ -515,12 +514,155 @@
 
     function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+    // ── 데이터 엑셀 다운로드 ──
+    function downloadDataExcel() {
+      const rows = searchResults.map(r => ({
+        '학원명': r.name, '카테고리': r.category, '지번주소': r.address,
+        '도로명주소': r.road_address, '상세주소': r.detail_address,
+        '전화번호': r.phone, '우편번호': r.zip_code,
+        '링크': r.place_url, '검색키워드': r.search_keyword,
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '체육학원목록');
+      ws['!cols'] = [
+        { wch: 20 }, { wch: 30 }, { wch: 30 }, { wch: 30 },
+        { wch: 20 }, { wch: 15 }, { wch: 8 }, { wch: 40 }, { wch: 10 },
+      ];
+      const now = new Date();
+      const ts = now.getFullYear().toString() +
+        String(now.getMonth()+1).padStart(2,'0') +
+        String(now.getDate()).padStart(2,'0') + '_' +
+        String(now.getHours()).padStart(2,'0') +
+        String(now.getMinutes()).padStart(2,'0') +
+        String(now.getSeconds()).padStart(2,'0');
+      XLSX.writeFile(wb, ts + '.xlsx');
+    }
+
+    // ── 라벨 출력용 엑셀 다운로드 (ExcelJS) ──
+    async function downloadLabelExcel() {
+      const wb = new ExcelJS.Workbook();
+      const ws = wb.addWorksheet('라벨', {
+        pageSetup: {
+          paperSize: 9,
+          orientation: 'portrait',
+          fitToPage: false,
+          margins: {
+            left: 1.91 / 2.54, right: 1.91 / 2.54,
+            top: 1.91 / 2.54, bottom: 1.91 / 2.54,
+            header: 0, footer: 0,
+          },
+        },
+      });
+
+      // 열 너비: A,C,D,F=0.4cm(≈2), B,E=9cm(≈45)
+      ws.getColumn(1).width = 2;
+      ws.getColumn(2).width = 45;
+      ws.getColumn(3).width = 2;
+      ws.getColumn(4).width = 2;
+      ws.getColumn(5).width = 45;
+      ws.getColumn(6).width = 2;
+
+      const BLOCK = 6;
+      const thick = { style: 'medium', color: { argb: 'FF000000' } };
+      const none = {};
+      const font14 = { name: '맑은 고딕', size: 14 };
+      const font14b = { name: '맑은 고딕', size: 14, bold: true };
+      const fontGuide = { name: '맑은 고딕', size: 8, color: { argb: 'FF999999' } };
+
+      for (let i = 0; i < searchResults.length; i += 2) {
+        const block = Math.floor(i / 2);
+        const sr = block * BLOCK + 1; // start row (1-based)
+
+        // Row heights
+        ws.getRow(sr).height = 5.67;       // 0.2cm
+        ws.getRow(sr + 4).height = 11.34;  // 0.4cm
+        ws.getRow(sr + 5).height = 5.67;   // gap
+
+        // Left label
+        fillLabel(ws, sr, 2, searchResults[i], font14, font14b, fontGuide);
+        applyBorder(ws, sr, sr + 4, 1, 3, thick);
+
+        // Right label
+        if (i + 1 < searchResults.length) {
+          fillLabel(ws, sr, 5, searchResults[i + 1], font14, font14b, fontGuide);
+          applyBorder(ws, sr, sr + 4, 4, 6, thick);
+        }
+      }
+
+      const buffer = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url;
+      a.download = '편지카드.xlsx'; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function fillLabel(ws, sr, col, data, font14, font14b, fontGuide) {
+      const addr = data.road_address + (data.detail_address && data.detail_address !== '동호수 정보 없음' ? ' ' + data.detail_address : '');
+      const zip = data.zip_code ? String(data.zip_code).replace('.0', '') : '';
+
+      // Row sr+1: "받는 사람"
+      const c1 = ws.getCell(sr + 1, col);
+      c1.value = '받는 사람';
+      c1.font = font14b;
+      c1.alignment = { horizontal: 'left', vertical: 'middle' };
+
+      // Row sr+2: 도로명주소 + 상세주소
+      const c2 = ws.getCell(sr + 2, col);
+      c2.value = { richText: [
+        { font: fontGuide, text: '도로명주소  ' },
+        { font: font14, text: '\n' + (addr || '') },
+      ]};
+      c2.alignment = { wrapText: true, vertical: 'top' };
+
+      // Row sr+3: 원명 (left) + 우편번호 (right)
+      const c3 = ws.getCell(sr + 3, col);
+      c3.value = { richText: [
+        { font: fontGuide, text: '원명 ' },
+        { font: font14, text: (data.name || '') },
+        { font: font14, text: '                    ' },
+        { font: fontGuide, text: '우편번호 ' },
+        { font: font14, text: zip },
+      ]};
+      c3.alignment = { wrapText: true, vertical: 'middle' };
+    }
+
+    function applyBorder(ws, rowStart, rowEnd, colStart, colEnd, borderStyle) {
+      for (let r = rowStart; r <= rowEnd; r++) {
+        for (let c = colStart; c <= colEnd; c++) {
+          const cell = ws.getCell(r, c);
+          const b = {};
+          if (r === rowStart) b.top = borderStyle;
+          if (r === rowEnd) b.bottom = borderStyle;
+          if (c === colStart) b.left = borderStyle;
+          if (c === colEnd) b.right = borderStyle;
+          if (Object.keys(b).length) cell.border = b;
+        }
+      }
+    }
+
+    async function downloadAll() {
+      downloadDataExcel();
+      await new Promise(r => setTimeout(r, 500));
+      await downloadLabelExcel();
+    }
+
+    // ── Results UI ──
     function showResult(count) {
       document.getElementById('progress-area').classList.remove('show');
       const area = document.getElementById('result-area');
       area.classList.add('show');
       area.innerHTML = `
         <div class="result-count">${count}개 학원 검색 완료</div>
+        <div class="btn-group">
+          <button class="btn-download" onclick="downloadAll()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+            </svg>
+            엑셀 다운로드
+          </button>
+        </div>
         <button class="btn-retry" onclick="resetSearch()">새 검색</button>
       `;
       document.getElementById('btn-search').disabled = false;
@@ -536,6 +678,9 @@
     }
     function resetSearch() {
       cancelled = true;
+      searching = false;
+      searchResults = [];
+      localStorage.removeItem('scrap_results');
       document.getElementById('result-area').classList.remove('show');
       document.getElementById('result-area').innerHTML = '';
       document.getElementById('progress-area').classList.remove('show');
