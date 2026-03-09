@@ -556,34 +556,37 @@
         },
       });
 
-      // A4 가로 활용: 라벨2개 + 가운데 간격
-      ws.getColumn(1).width = 48;
-      ws.getColumn(2).width = 3;
-      ws.getColumn(3).width = 48;
+      // A4 가로 활용: 라벨 4개 (A, C, E, G) + 간격 (B, D, F)
+      const COLS_PER_ROW = 4;
+      ws.getColumn(1).width = 24; // A
+      ws.getColumn(2).width = 2;  // gap
+      ws.getColumn(3).width = 24; // C
+      ws.getColumn(4).width = 2;  // gap
+      ws.getColumn(5).width = 24; // E
+      ws.getColumn(6).width = 2;  // gap
+      ws.getColumn(7).width = 24; // G
+      const labelCols = [1, 3, 5, 7];
 
       const BLOCK = 5; // 4 content rows + 1 gap row
       const thick = { style: 'medium', color: { argb: 'FF000000' } };
       const font14 = { name: '맑은 고딕', size: 14 };
       const font14b = { name: '맑은 고딕', size: 14, bold: true };
 
-      for (let i = 0; i < searchResults.length; i += 2) {
-        const block = Math.floor(i / 2);
+      for (let i = 0; i < searchResults.length; i += COLS_PER_ROW) {
+        const block = Math.floor(i / COLS_PER_ROW);
         const sr = block * BLOCK + 1;
 
-        ws.getRow(sr).height = 20;     // 받는 사람
-        ws.getRow(sr + 1).height = 20;  // 도로명주소 (wrapText시 자동확장)
-        ws.getRow(sr + 2).height = 20;  // 원명
-        ws.getRow(sr + 3).height = 20;  // 우편번호
-        ws.getRow(sr + 4).height = 8;   // gap
+        ws.getRow(sr).height = 20;
+        ws.getRow(sr + 1).height = 20;
+        ws.getRow(sr + 2).height = 20;
+        ws.getRow(sr + 3).height = 20;
+        ws.getRow(sr + 4).height = 8;
 
-        // Left label
-        fillLabel(ws, sr, 1, searchResults[i], font14, font14b);
-        applyBorder(ws, sr, sr + 3, 1, 1, thick);
-
-        // Right label
-        if (i + 1 < searchResults.length) {
-          fillLabel(ws, sr, 3, searchResults[i + 1], font14, font14b);
-          applyBorder(ws, sr, sr + 3, 3, 3, thick);
+        for (let j = 0; j < COLS_PER_ROW; j++) {
+          if (i + j < searchResults.length) {
+            fillLabel(ws, sr, labelCols[j], searchResults[i + j], font14, font14b);
+            applyBorder(ws, sr, sr + 3, labelCols[j], labelCols[j], thick);
+          }
         }
       }
 
