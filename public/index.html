@@ -546,7 +546,7 @@
       const ws = wb.addWorksheet('라벨', {
         pageSetup: {
           paperSize: 9,
-          orientation: 'landscape',
+          orientation: 'portrait',
           fitToPage: true,
           fitToWidth: 1,
           fitToHeight: 0,
@@ -558,16 +558,12 @@
         },
       });
 
-      // A4 가로 활용: 라벨 4개 (A, C, E, G) + 간격 (B, D, F)
-      const COLS_PER_ROW = 4;
-      ws.getColumn(1).width = 24; // A
-      ws.getColumn(2).width = 2;  // gap
-      ws.getColumn(3).width = 24; // C
-      ws.getColumn(4).width = 2;  // gap
-      ws.getColumn(5).width = 24; // E
-      ws.getColumn(6).width = 2;  // gap
-      ws.getColumn(7).width = 24; // G
-      const labelCols = [1, 3, 5, 7];
+      // A4: 라벨 2개 (A, C) + 간격 (B)
+      const COLS_PER_ROW = 2;
+      ws.getColumn(1).width = 45;
+      ws.getColumn(2).width = 3;
+      ws.getColumn(3).width = 45;
+      const labelCols = [1, 3];
 
       const BLOCK = 5; // 4 content rows + 1 gap row
       const thick = { style: 'medium', color: { argb: 'FF000000' } };
