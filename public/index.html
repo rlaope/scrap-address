@@ -458,9 +458,9 @@
                 if (enough) break;
                 if (data.meta && data.meta.is_end) break;
               } catch { break; }
-              await sleep(100);
+              await sleep(30);
             }
-            await sleep(50);
+            await sleep(20);
           }
         }
 
@@ -496,7 +496,7 @@
             } catch {}
           }
           if (!r.detail_address) r.detail_address = '동호수 정보 없음';
-          await sleep(80);
+          await sleep(20);
         }
 
         setProgress(100, '완료!');
