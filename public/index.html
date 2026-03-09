@@ -419,8 +419,13 @@
         let results = [];
         const collectLimit = maxResults * 2;
 
-        // 키워드별 병렬 검색
-        let kwDone = 0;
+        // 키워드별 병렬 검색 + 실시간 진행률
+        let apiCalls = 0;
+        const progressInterval = setInterval(() => {
+          const pct = Math.min(35, 5 + Math.round((results.length / collectLimit) * 30));
+          setProgress(pct, `검색 중... [${results.length}건 수집]`);
+        }, 300);
+
         await Promise.all(keywords.map(async (keyword) => {
           if (cancelled) return;
           for (const pt of points) {
@@ -454,9 +459,8 @@
               } catch { break; }
             }
           }
-          kwDone++;
-          setProgress(5 + Math.round((kwDone / keywords.length) * 30), `검색 중... [${results.length}건]`);
         }));
+        clearInterval(progressInterval);
 
         // Sort and limit
         results.sort((a, b) => a.distance_km - b.distance_km);
