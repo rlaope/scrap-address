@@ -570,11 +570,11 @@
         const block = Math.floor(i / 2);
         const sr = block * BLOCK + 1;
 
-        ws.getRow(sr).height = 25;     // 받는 사람
-        ws.getRow(sr + 1).height = 30;  // 도로명주소
-        ws.getRow(sr + 2).height = 25;  // 원명
-        ws.getRow(sr + 3).height = 25;  // 우편번호
-        ws.getRow(sr + 4).height = 10;  // gap
+        ws.getRow(sr).height = 20;     // 받는 사람
+        ws.getRow(sr + 1).height = 20;  // 도로명주소 (wrapText시 자동확장)
+        ws.getRow(sr + 2).height = 20;  // 원명
+        ws.getRow(sr + 3).height = 20;  // 우편번호
+        ws.getRow(sr + 4).height = 8;   // gap
 
         // Left label
         fillLabel(ws, sr, 1, searchResults[i], font14, font14b);
@@ -598,31 +598,28 @@
     function fillLabel(ws, sr, col, data, font14, font14b) {
       const addr = data.road_address + (data.detail_address && data.detail_address !== '동호수 정보 없음' ? ' ' + data.detail_address : '');
       const zip = data.zip_code ? String(data.zip_code).replace('.0', '') : '';
-      const font11 = { name: '맑은 고딕', size: 11 };
-      const font11b = { name: '맑은 고딕', size: 11, bold: true };
-
       // Row sr: 받는 사람 (14pt bold)
       const c0 = ws.getCell(sr, col);
       c0.value = '받는 사람';
       c0.font = font14b;
       c0.alignment = { horizontal: 'left', vertical: 'middle' };
 
-      // Row sr+1: 도로명주소 (오른쪽 정렬)
+      // Row sr+1: 도로명주소 (오른쪽 정렬, 14pt)
       const c1 = ws.getCell(sr + 1, col);
       c1.value = addr || '';
-      c1.font = font11;
+      c1.font = font14;
       c1.alignment = { wrapText: true, horizontal: 'right', vertical: 'middle' };
 
-      // Row sr+2: 원명 (오른쪽 정렬)
+      // Row sr+2: 원명 (오른쪽 정렬, 14pt)
       const c2 = ws.getCell(sr + 2, col);
       c2.value = data.name || '';
-      c2.font = font11;
+      c2.font = font14;
       c2.alignment = { horizontal: 'right', vertical: 'middle' };
 
-      // Row sr+3: 우편번호 (오른쪽 정렬)
+      // Row sr+3: 우편번호 (오른쪽 정렬, 14pt)
       const c3 = ws.getCell(sr + 3, col);
       c3.value = zip;
-      c3.font = font11;
+      c3.font = font14;
       c3.alignment = { horizontal: 'right', vertical: 'middle' };
     }
 
