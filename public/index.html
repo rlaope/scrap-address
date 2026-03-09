@@ -580,7 +580,10 @@
         const block = Math.floor(i / 2);
         const sr = block * BLOCK + 1;
 
-        for (let r = 0; r < 4; r++) ws.getRow(sr + r).height = 20;
+        ws.getRow(sr).height = 20;     // 받는 사람
+        ws.getRow(sr + 1).height = 40;  // 도로명주소 (2줄 가능)
+        ws.getRow(sr + 2).height = 20;  // 원명
+        ws.getRow(sr + 3).height = 20;  // 우편번호
         ws.getRow(sr + 4).height = 6; // gap
 
         // Left label (A열)
