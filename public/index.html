@@ -606,23 +606,23 @@
       c0.font = font14b;
       c0.alignment = { horizontal: 'left', vertical: 'middle' };
 
-      // Row sr+1: 도로명주소
+      // Row sr+1: 도로명주소 (오른쪽 정렬)
       const c1 = ws.getCell(sr + 1, col);
       c1.value = addr || '';
       c1.font = font11;
-      c1.alignment = { wrapText: true, vertical: 'middle' };
+      c1.alignment = { wrapText: true, horizontal: 'right', vertical: 'middle' };
 
-      // Row sr+2: 원명
+      // Row sr+2: 원명 (오른쪽 정렬)
       const c2 = ws.getCell(sr + 2, col);
       c2.value = data.name || '';
-      c2.font = font11b;
-      c2.alignment = { horizontal: 'left', vertical: 'middle' };
+      c2.font = font11;
+      c2.alignment = { horizontal: 'right', vertical: 'middle' };
 
-      // Row sr+3: 우편번호
+      // Row sr+3: 우편번호 (오른쪽 정렬)
       const c3 = ws.getCell(sr + 3, col);
-      c3.value = zip ? `(${zip})` : '';
+      c3.value = zip;
       c3.font = font11;
-      c3.alignment = { horizontal: 'left', vertical: 'middle' };
+      c3.alignment = { horizontal: 'right', vertical: 'middle' };
     }
 
     function applyBorder(ws, rowStart, rowEnd, col, col2, borderStyle) {
