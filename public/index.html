@@ -417,19 +417,14 @@
         const points = searchPoints(centerLat, centerLng);
         const seen = new Set();
         let results = [];
-        const totalSteps = keywords.length * points.length;
-        const collectLimit = maxResults * 2; // 정렬 전 여유분
-        let step = 0;
-        let enough = false;
+        const collectLimit = maxResults * 2;
 
-        for (const keyword of keywords) {
-          if (cancelled || enough) break;
+        // 키워드별 병렬 검색
+        let kwDone = 0;
+        await Promise.all(keywords.map(async (keyword) => {
+          if (cancelled) return;
           for (const pt of points) {
-            if (cancelled || enough) break;
-            step++;
-            const pct = 5 + Math.round((step / totalSteps) * 30);
-            setProgress(pct, `'${keyword}' 검색 중 (${pt.label})... [${results.length}건]`);
-
+            if (cancelled || results.length >= collectLimit) return;
             for (let page = 1; page <= 5; page++) {
               try {
                 const data = await kakaoAPI('search/keyword.json', {
@@ -453,23 +448,24 @@
                     search_keyword: keyword, place_url: doc.place_url || '',
                     place_id: (doc.place_url || '').split('/').pop(),
                   });
-                  if (results.length >= collectLimit) { enough = true; break; }
                 }
-                if (enough) break;
+                if (results.length >= collectLimit) return;
                 if (data.meta && data.meta.is_end) break;
               } catch { break; }
             }
           }
-        }
+          kwDone++;
+          setProgress(5 + Math.round((kwDone / keywords.length) * 30), `검색 중... [${results.length}건]`);
+        }));
 
         // Sort and limit
         results.sort((a, b) => a.distance_km - b.distance_km);
         results = results.slice(0, maxResults);
 
-        // 3. Enrich (5개씩 병렬 처리)
+        // 3. Enrich (15개씩 병렬 처리)
         const total = results.length;
         let enriched = 0;
-        const BATCH = 5;
+        const BATCH = 15;
         for (let i = 0; i < total; i += BATCH) {
           if (cancelled) break;
           const batch = results.slice(i, Math.min(i + BATCH, total));
