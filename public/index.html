@@ -642,12 +642,6 @@
       }
     }
 
-    async function downloadAll() {
-      downloadDataExcel();
-      await new Promise(r => setTimeout(r, 500));
-      await downloadLabelExcel();
-    }
-
     // ── Results UI ──
     function showResult(count) {
       document.getElementById('progress-area').classList.remove('show');
@@ -656,11 +650,18 @@
       area.innerHTML = `
         <div class="result-count">${count}개 학원 검색 완료</div>
         <div class="btn-group">
-          <button class="btn-download" onclick="downloadAll()">
+          <button class="btn-download" onclick="downloadDataExcel()">
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
             </svg>
-            엑셀 다운로드
+            주소지정보 받기
+          </button>
+          <button class="btn-download" onclick="downloadLabelExcel()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M6 2h12l4 4v14a2 2 0 01-2 2H4a2 2 0 01-2-2V4c0-1.1.9-2 2-2z"/>
+              <path d="M14 2v6h6M8 13h8M8 17h8M8 9h2"/>
+            </svg>
+            편지카드 정보 받기
           </button>
         </div>
         <button class="btn-retry" onclick="resetSearch()">새 검색</button>
