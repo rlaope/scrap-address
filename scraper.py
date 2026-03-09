@@ -55,6 +55,7 @@ class Academy:
     road_address: str
     detail_address: str
     phone: str
+    zip_code: str
     latitude: float
     longitude: float
     distance_km: float
@@ -339,6 +340,7 @@ def search_academies(
                         road_address=doc.get("road_address", doc.get("road_address_name", "")),
                         detail_address="",
                         phone=doc.get("phone", doc.get("tel", "")),
+                        zip_code="",
                         latitude=p_lat,
                         longitude=p_lng,
                         distance_km=round(dist, 2),
@@ -379,6 +381,7 @@ def search_academies(
                         road_address=doc.get("roadAddress", ""),
                         detail_address="",
                         phone=doc.get("tel", ""),
+                        zip_code="",
                         latitude=p_lat,
                         longitude=p_lng,
                         distance_km=round(dist, 2),
@@ -446,10 +449,12 @@ def save_results(
 
     sorted_academies = sorted(academies, key=lambda a: a.distance_km)
 
-    df = pd.DataFrame([asdict(a) for a in sorted_academies])
+    df_full = pd.DataFrame([asdict(a) for a in sorted_academies])
+    df = df_full[["name", "category", "address", "road_address", "detail_address",
+                   "phone", "zip_code", "place_url", "search_keyword"]].copy()
     df.columns = [
-        "학원명", "카테고리", "지번주소", "도로명주소", "상세주소(동/호수)",
-        "전화번호", "위도", "경도", "거리(km)", "검색키워드", "링크",
+        "학원명", "카테고리", "지번주소", "도로명주소", "상세주소",
+        "전화번호", "우편번호", "링크", "검색키워드",
     ]
 
     # CSV
@@ -490,7 +495,7 @@ def save_results(
     print("\n[거리별 분포]")
     bins = [0, 5, 10, 15, 20, 25, 30]
     for i in range(len(bins) - 1):
-        count = len(df[(df["거리(km)"] >= bins[i]) & (df["거리(km)"] < bins[i + 1])])
+        count = len(df_full[(df_full["distance_km"] >= bins[i]) & (df_full["distance_km"] < bins[i + 1])])
         if count > 0:
             print(f"  {bins[i]}~{bins[i+1]}km: {count}건")
 
@@ -579,7 +584,8 @@ def main():
                 name=ac.name, category=ac.category,
                 address=ac.address, road_address=ac.road_address,
                 detail_address=detail if detail else "동호수 정보 없음",
-                phone=ac.phone, latitude=ac.latitude, longitude=ac.longitude,
+                phone=ac.phone, zip_code=ac.zip_code,
+                latitude=ac.latitude, longitude=ac.longitude,
                 distance_km=ac.distance_km, search_keyword=ac.search_keyword,
                 place_url=ac.place_url,
             ))
@@ -589,7 +595,8 @@ def main():
                 name=ac.name, category=ac.category,
                 address=ac.address, road_address=ac.road_address,
                 detail_address="동호수 정보 없음",
-                phone=ac.phone, latitude=ac.latitude, longitude=ac.longitude,
+                phone=ac.phone, zip_code=ac.zip_code,
+                latitude=ac.latitude, longitude=ac.longitude,
                 distance_km=ac.distance_km, search_keyword=ac.search_keyword,
                 place_url=ac.place_url,
             ))

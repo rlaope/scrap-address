@@ -40,6 +40,7 @@ class Academy:
     road_address: str
     detail_address: str
     phone: str
+    zip_code: str
     latitude: float
     longitude: float
     distance_km: float
@@ -84,6 +85,25 @@ class KakaoLocalClient:
         lat, lng = float(doc["y"]), float(doc["x"])
         print(f"기준 좌표: {lat}, {lng}")
         return lat, lng
+
+    def lookup_zipcode(self, road_address):
+        """도로명주소로 우편번호(zone_no) 조회."""
+        if not road_address:
+            return ""
+        try:
+            resp = self._session.get(
+                f"{KAKAO_API_BASE}/search/address.json",
+                params={"query": road_address},
+            )
+            resp.raise_for_status()
+            docs = resp.json().get("documents", [])
+            if docs:
+                road = docs[0].get("road_address")
+                if road:
+                    return road.get("zone_no", "")
+        except Exception:
+            pass
+        return ""
 
     def search_keyword(self, keyword, lat, lng, radius_m=20000, page=1):
         resp = self._session.get(
@@ -147,7 +167,8 @@ def search_academies(client, center_lat, center_lng, radius_km, keywords):
                         name=doc.get("place_name", ""), category=category,
                         address=doc.get("address_name", ""), road_address=doc.get("road_address_name", ""),
                         detail_address="",
-                        phone=doc.get("phone", ""), latitude=p_lat, longitude=p_lng,
+                        phone=doc.get("phone", ""), zip_code="",
+                        latitude=p_lat, longitude=p_lng,
                         distance_km=round(dist, 2), search_keyword=keyword,
                         place_url=doc.get("place_url", ""),
                     ))
@@ -190,7 +211,10 @@ def save_results(academies, output_dir, address, radius_km):
         return
     sorted_academies = sorted(academies, key=lambda a: a.distance_km)
     df = pd.DataFrame([asdict(a) for a in sorted_academies])
-    df.columns = ["학원명","카테고리","지번주소","도로명주소","상세주소(동/호수)","전화번호","위도","경도","거리(km)","검색키워드","링크"]
+    df = df[["name", "category", "address", "road_address", "detail_address",
+             "phone", "zip_code", "place_url", "search_keyword"]]
+    df.columns = ["학원명", "카테고리", "지번주소", "도로명주소", "상세주소",
+                  "전화번호", "우편번호", "링크", "검색키워드"]
 
     csv_path = output_dir / "academies.csv"
     df.to_csv(csv_path, index=False, encoding="utf-8-sig")
@@ -238,11 +262,12 @@ def main():
     if max_results > 0:
         academies = sorted(academies, key=lambda a: a.distance_km)[:max_results]
 
-    # 상세 주소(동/호수) 가져오기
-    print("[3/4] 상세 주소(동/호수) 조회 중...")
+    # 상세 주소(동/호수) + 우편번호 가져오기
+    print("[3/4] 상세 주소(동/호수) 및 우편번호 조회 중...")
     enriched = []
     for i, ac in enumerate(academies):
         place_id = ac.place_url.rstrip("/").split("/")[-1] if ac.place_url else ""
+        zip_code = client.lookup_zipcode(ac.road_address)
         if place_id:
             print(f"\r  [{i+1}/{len(academies)}] {ac.name} 상세 주소 조회...", end="", flush=True)
             full_addr = fetch_detail_address(place_id)
@@ -261,7 +286,8 @@ def main():
                 name=ac.name, category=ac.category,
                 address=ac.address, road_address=ac.road_address,
                 detail_address=detail if detail else "동호수 정보 없음",
-                phone=ac.phone, latitude=ac.latitude, longitude=ac.longitude,
+                phone=ac.phone, zip_code=zip_code,
+                latitude=ac.latitude, longitude=ac.longitude,
                 distance_km=ac.distance_km, search_keyword=ac.search_keyword,
                 place_url=ac.place_url,
             ))
@@ -271,7 +297,8 @@ def main():
                 name=ac.name, category=ac.category,
                 address=ac.address, road_address=ac.road_address,
                 detail_address="동호수 정보 없음",
-                phone=ac.phone, latitude=ac.latitude, longitude=ac.longitude,
+                phone=ac.phone, zip_code=zip_code,
+                latitude=ac.latitude, longitude=ac.longitude,
                 distance_km=ac.distance_km, search_keyword=ac.search_keyword,
                 place_url=ac.place_url,
             ))
