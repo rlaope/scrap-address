@@ -8,259 +8,261 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f0f2f5;
-      color: #1a1a2e;
+      background: #f5eedc;
+      color: #3e2f1c;
       min-height: 100vh;
     }
     .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 28px 0 24px;
+      background: #5c4033;
+      padding: 14px 0;
       text-align: center;
     }
-    .header h1 { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.5px; }
-    .header p { margin-top: 6px; font-size: 0.9rem; opacity: 0.85; }
-    .container { max-width: 680px; margin: -20px auto 40px; padding: 0 16px; }
-    .card {
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-      padding: 28px;
-      margin-bottom: 16px;
-    }
-    .field { margin-bottom: 20px; }
+    .header h1 { font-size: 1.3rem; font-weight: 700; color: #f5eedc; }
+    .container { max-width: 520px; margin: 20px auto; padding: 0 16px; }
+    .field { margin-bottom: 12px; }
     .field label {
       display: block;
-      font-size: 0.85rem;
+      font-size: 0.78rem;
       font-weight: 600;
-      color: #555;
-      margin-bottom: 6px;
+      color: #7a6a52;
+      margin-bottom: 4px;
     }
-    .input-row { display: flex; gap: 8px; align-items: center; }
+    .input-row { display: flex; gap: 5px; align-items: center; }
     .input-row input { flex: 1; }
-    input, select {
+    input {
       width: 100%;
-      padding: 10px 14px;
-      border: 1.5px solid #ddd;
-      border-radius: 10px;
-      font-size: 0.95rem;
-      transition: border-color 0.2s;
+      padding: 7px 10px;
+      border: 1px solid #d5c9a8;
+      border-radius: 5px;
+      font-size: 0.85rem;
       outline: none;
-      background: white;
+      background: #fff;
     }
-    input:focus { border-color: #667eea; }
+    input:focus { border-color: #d4a017; }
     input[readonly] {
-      background: #f7f7fa;
-      color: #555;
+      background: #efe8d6;
+      color: #6b5c43;
       cursor: default;
     }
-    input[readonly]:focus { border-color: #ddd; }
+    input[readonly]:focus { border-color: #d5c9a8; }
     input.editing {
-      background: white !important;
-      color: #1a1a2e !important;
-      border-color: #667eea !important;
+      background: #fff !important;
+      color: #3e2f1c !important;
+      border-color: #c9952a !important;
     }
     .btn-edit {
-      padding: 10px 16px;
-      border: 1.5px solid #ddd;
-      border-radius: 10px;
-      background: #f7f7fa;
+      padding: 7px 12px;
+      border: 1px solid #d5c9a8;
+      border-radius: 5px;
+      background: #efe8d6;
       cursor: pointer;
-      font-size: 0.85rem;
-      color: #667eea;
+      font-size: 0.78rem;
+      color: #8a6d1b;
       font-weight: 600;
       white-space: nowrap;
-      transition: all 0.2s;
     }
-    .btn-edit:hover { background: #eef0ff; border-color: #667eea; }
-    .btn-edit.active { background: #667eea; color: white; border-color: #667eea; }
-    .row { display: flex; gap: 12px; }
+    .btn-edit:hover { background: #e6dcc4; }
+    .btn-edit.active { background: #c9952a; color: #fff; border-color: #c9952a; }
+    .row { display: flex; gap: 8px; }
     .row .field { flex: 1; }
     .keywords-box {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      padding: 12px;
-      border: 1.5px solid #ddd;
-      border-radius: 10px;
-      min-height: 48px;
-      background: #fafafa;
+      gap: 5px;
+      padding: 8px;
+      border: 1px solid #d5c9a8;
+      border-radius: 5px;
+      min-height: 36px;
+      background: #faf6ec;
     }
     .chip {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      padding: 6px 12px;
-      background: #eef0ff;
-      color: #4a5ad8;
-      border-radius: 20px;
-      font-size: 0.85rem;
+      gap: 3px;
+      padding: 3px 8px;
+      background: #e8dcc0;
+      color: #5c4033;
+      border-radius: 12px;
+      font-size: 0.78rem;
       font-weight: 500;
     }
     .chip .remove {
       cursor: pointer;
-      font-size: 1rem;
+      font-size: 0.85rem;
       line-height: 1;
-      opacity: 0.6;
-      transition: opacity 0.15s;
+      opacity: 0.5;
     }
     .chip .remove:hover { opacity: 1; }
-    .add-keyword {
-      display: inline-flex;
-      align-items: center;
-    }
+    .add-keyword { display: inline-flex; align-items: center; }
     .add-keyword input {
-      width: 100px;
-      padding: 6px 10px;
-      border: 1.5px dashed #ccc;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      background: white;
+      width: 80px;
+      padding: 3px 7px;
+      border: 1px dashed #c5b896;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      background: #fff;
     }
     .btn-search {
       width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      padding: 10px;
+      background: #5c4033;
+      color: #f5eedc;
       border: none;
-      border-radius: 12px;
-      font-size: 1.05rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
-    }
-    .btn-search:hover { opacity: 0.92; }
-    .btn-search:active { transform: scale(0.98); }
-    .btn-search:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-    .progress-area {
-      display: none;
-      text-align: center;
-      padding: 20px 0;
-    }
-    .progress-area.show { display: block; }
-    .spinner {
-      width: 40px; height: 40px;
-      border: 4px solid #eee;
-      border-top-color: #667eea;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 16px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .progress-text {
-      font-size: 0.95rem;
-      color: #555;
-      font-weight: 500;
-    }
-    .result-area {
-      display: none;
-      text-align: center;
-      padding: 16px 0;
-    }
-    .result-area.show { display: block; }
-    .result-count {
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: #4a5ad8;
-      margin-bottom: 12px;
-    }
-    .btn-download {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 28px;
-      background: #22c55e;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: opacity 0.2s;
-      text-decoration: none;
-    }
-    .btn-download:hover { opacity: 0.9; }
-    .error-text { color: #ef4444; font-weight: 600; font-size: 0.95rem; }
-    .btn-retry {
-      margin-top: 12px;
-      padding: 10px 24px;
-      background: #667eea;
-      color: white;
-      border: none;
-      border-radius: 10px;
+      border-radius: 5px;
       font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
     }
+    .btn-search:hover { background: #4a3328; }
+    .btn-search:disabled { opacity: 0.5; cursor: not-allowed; }
+    .progress-area {
+      display: none;
+      text-align: center;
+      padding: 16px 0;
+    }
+    .progress-area.show { display: block; }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid #d5c9a8;
+      border-top-color: #5c4033;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .progress-text {
+      font-size: 0.85rem;
+      color: #7a6a52;
+      animation: fadeInOut 0.5s ease;
+    }
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translateY(4px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .progress-detail { font-size: 0.78rem; color: #a89878; margin-top: 4px; }
+    .progress-bar-wrap {
+      width: 100%;
+      height: 6px;
+      background: #e0d6c0;
+      border-radius: 3px;
+      margin: 10px 0 4px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: #5c4033;
+      border-radius: 3px;
+      width: 0%;
+      transition: width 0.6s ease;
+    }
+    .progress-pct {
+      font-size: 0.78rem;
+      color: #5c4033;
+      font-weight: 700;
+    }
+    .result-area {
+      display: none;
+      text-align: center;
+      padding: 14px 0;
+    }
+    .result-area.show { display: block; }
+    .result-count {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #3e2f1c;
+      margin-bottom: 10px;
+    }
+    .btn-download {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 20px;
+      background: #5c4033;
+      color: #f5eedc;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn-download:hover { background: #4a3328; }
+    .error-text { color: #c0392b; font-weight: 600; font-size: 0.85rem; }
+    .btn-retry {
+      margin-top: 8px;
+      padding: 6px 16px;
+      background: #fff;
+      color: #5c4033;
+      border: 1px solid #5c4033;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-retry:hover { background: #efe8d6; }
     .footer {
       text-align: center;
-      padding: 20px;
-      font-size: 0.8rem;
-      color: #999;
+      padding: 16px;
+      font-size: 0.72rem;
+      color: #a89878;
+      margin-top: 30px;
     }
   </style>
 </head>
 <body>
   <div class="header">
     <h1>쥬쥬핑 월드 (scrap)</h1>
-    <p>어린이 체육 학원 검색기</p>
   </div>
 
   <div class="container">
-    <div class="card">
-      <!-- Address -->
-      <div class="field">
-        <label>기준 주소</label>
-        <div class="input-row">
-          <input type="text" id="address" value="{{ default_address }}" readonly>
-          <button class="btn-edit" id="btn-addr-edit" onclick="toggleAddressEdit()">수정</button>
-        </div>
+    <div class="field">
+      <label>기준 주소</label>
+      <div class="input-row">
+        <input type="text" id="address" value="{{ default_address }}" readonly>
+        <button class="btn-edit" id="btn-addr-edit" onclick="toggleAddressEdit()">수정</button>
       </div>
-
-      <!-- Radius + Max -->
-      <div class="row">
-        <div class="field">
-          <label>검색 반경 (km)</label>
-          <input type="number" id="radius" value="{{ default_radius }}" min="1" max="100">
-        </div>
-        <div class="field">
-          <label>최대 결과 수</label>
-          <input type="number" id="max_results" value="500" min="1" max="5000">
-        </div>
-      </div>
-
-      <!-- Keywords -->
-      <div class="field">
-        <label>검색 키워드</label>
-        <div class="keywords-box" id="keywords-box">
-          {% for kw in keywords %}
-          <span class="chip" data-kw="{{ kw }}">
-            {{ kw }}
-            <span class="remove" onclick="removeKeyword(this)">&times;</span>
-          </span>
-          {% endfor %}
-          <span class="add-keyword">
-            <input type="text" id="new-keyword" placeholder="+ 추가" onkeydown="addKeyword(event)">
-          </span>
-        </div>
-      </div>
-
-      <!-- Search Button -->
-      <button class="btn-search" id="btn-search" onclick="startSearch()">검색 시작</button>
-
-      <!-- Progress -->
-      <div class="progress-area" id="progress-area">
-        <div class="spinner"></div>
-        <div class="progress-text" id="progress-text">시작 중...</div>
-      </div>
-
-      <!-- Result -->
-      <div class="result-area" id="result-area"></div>
     </div>
+
+    <div class="row">
+      <div class="field" style="flex:0 0 120px">
+        <label>반경 (km)</label>
+        <input type="number" id="radius" value="{{ default_radius }}" min="1" max="100">
+      </div>
+      <div class="field" style="flex:0 0 120px">
+        <label>최대 결과 수</label>
+        <input type="number" id="max_results" value="500" min="1" max="5000">
+      </div>
+      <div class="field" style="flex:1"></div>
+    </div>
+
+    <div class="field">
+      <label>검색 키워드</label>
+      <div class="keywords-box" id="keywords-box">
+        {% for kw in keywords %}
+        <span class="chip" data-kw="{{ kw }}">
+          {{ kw }}
+          <span class="remove" onclick="removeKeyword(this)">&times;</span>
+        </span>
+        {% endfor %}
+        <span class="add-keyword">
+          <input type="text" id="new-keyword" placeholder="+ 추가" onkeydown="addKeyword(event)">
+        </span>
+      </div>
+    </div>
+
+    <button class="btn-search" id="btn-search" onclick="startSearch()">검색 시작</button>
+
+    <div class="progress-area" id="progress-area">
+      <div class="spinner"></div>
+      <div class="progress-text" id="progress-text">검색 준비 중...</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <div class="progress-pct" id="progress-pct">0%</div>
+      <div class="progress-detail" id="progress-detail"></div>
+    </div>
+
+    <div class="result-area" id="result-area"></div>
   </div>
 
   <div class="footer">쥬쥬핑 월드 &copy; 2026</div>
@@ -268,6 +270,9 @@
   <script>
     let currentTaskId = null;
     let pollTimer = null;
+    let statusTimer = null;
+    const statusMessages = ['검색 중...', '스크랩 중...', '상세주소 검색 중...', '데이터 수집 중...'];
+    let statusIdx = 0;
 
     function toggleAddressEdit() {
       const input = document.getElementById('address');
@@ -319,12 +324,16 @@
       if (!address) { alert('주소를 입력해주세요.'); return; }
       if (keywords.length === 0) { alert('키워드를 1개 이상 입력해주세요.'); return; }
 
-      // UI state
       document.getElementById('btn-search').disabled = true;
       document.getElementById('progress-area').classList.add('show');
       document.getElementById('result-area').classList.remove('show');
       document.getElementById('result-area').innerHTML = '';
-      document.getElementById('progress-text').textContent = '시작 중...';
+      document.getElementById('progress-detail').textContent = '';
+      document.getElementById('progress-bar').style.width = '0%';
+      document.getElementById('progress-pct').textContent = '0%';
+      statusIdx = 0;
+      updateStatusText();
+      statusTimer = setInterval(updateStatusText, 2500);
 
       try {
         const resp = await fetch('/api/search', {
@@ -340,27 +349,41 @@
       }
     }
 
+    function updateStatusText() {
+      const el = document.getElementById('progress-text');
+      el.textContent = statusMessages[statusIdx % statusMessages.length];
+      el.style.animation = 'none';
+      el.offsetHeight;
+      el.style.animation = '';
+      statusIdx++;
+    }
+
+    function stopStatusRotation() {
+      if (statusTimer) { clearInterval(statusTimer); statusTimer = null; }
+    }
+
     function pollStatus() {
       if (!currentTaskId) return;
       pollTimer = setInterval(async () => {
         try {
           const resp = await fetch('/api/status/' + currentTaskId);
           const data = await resp.json();
-
-          document.getElementById('progress-text').textContent = data.progress;
-
+          document.getElementById('progress-detail').textContent = data.progress;
+          const pct = data.percent || 0;
+          document.getElementById('progress-bar').style.width = pct + '%';
+          document.getElementById('progress-pct').textContent = pct + '%';
           if (data.status === 'done') {
             clearInterval(pollTimer);
+            stopStatusRotation();
             document.getElementById('progress-area').classList.remove('show');
             showResult(data.count);
           } else if (data.status === 'error') {
             clearInterval(pollTimer);
+            stopStatusRotation();
             document.getElementById('progress-area').classList.remove('show');
             showError(data.progress);
           }
-        } catch (err) {
-          // ignore transient errors
-        }
+        } catch (err) {}
       }, 1500);
     }
 
@@ -370,7 +393,7 @@
       area.innerHTML = `
         <div class="result-count">${count}개 학원 검색 완료</div>
         <a class="btn-download" href="/api/download/${currentTaskId}">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
           </svg>
           엑셀 다운로드

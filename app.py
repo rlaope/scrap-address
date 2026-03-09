@@ -47,6 +47,7 @@ def start_search():
     tasks[task_id] = {
         "status": "running",
         "progress": "시작 중...",
+        "percent": 0,
         "count": 0,
         "result": None,
     }
@@ -67,6 +68,7 @@ def get_status(task_id):
         {
             "status": task["status"],
             "progress": task["progress"],
+            "percent": task.get("percent", 0),
             "count": task.get("count", 0),
         }
     )
@@ -100,15 +102,19 @@ def _run_search(task_id: str, data: dict) -> None:
             keywords = list(SEARCH_KEYWORDS)
 
         tasks[task_id]["progress"] = "좌표 변환 중..."
+        tasks[task_id]["percent"] = 3
 
         api_key = load_api_key()
         client = KakaoLocalClient(api_key)
         center_lat, center_lng = client.geocode(address)
 
         tasks[task_id]["progress"] = "학원 검색 중..."
+        tasks[task_id]["percent"] = 8
         academies = search_academies(
             client, center_lat, center_lng, radius, keywords
         )
+
+        tasks[task_id]["percent"] = 35
 
         if max_results > 0:
             academies = sorted(academies, key=lambda a: a.distance_km)[:max_results]
@@ -120,7 +126,9 @@ def _run_search(task_id: str, data: dict) -> None:
         # Enrich with detail address + zip code
         enriched: list[Academy] = []
         for i, ac in enumerate(academies):
+            pct = 35 + int((i + 1) / total * 55) if total else 90
             tasks[task_id]["progress"] = f"상세 정보 조회 중... ({i + 1}/{total})"
+            tasks[task_id]["percent"] = pct
 
             place_id = (
                 ac.place_url.rstrip("/").split("/")[-1] if ac.place_url else ""
@@ -160,6 +168,7 @@ def _run_search(task_id: str, data: dict) -> None:
 
         # Create Excel
         tasks[task_id]["progress"] = "엑셀 파일 생성 중..."
+        tasks[task_id]["percent"] = 92
         sorted_academies = sorted(enriched, key=lambda a: a.distance_km)
         df = pd.DataFrame([asdict(a) for a in sorted_academies])
         df = df[
@@ -194,6 +203,7 @@ def _run_search(task_id: str, data: dict) -> None:
 
         tasks[task_id]["result"] = output
         tasks[task_id]["status"] = "done"
+        tasks[task_id]["percent"] = 100
         tasks[task_id]["progress"] = f"완료! {len(sorted_academies)}개 검색됨"
         tasks[task_id]["count"] = len(sorted_academies)
 

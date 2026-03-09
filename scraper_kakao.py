@@ -56,18 +56,11 @@ def haversine(lat1, lon1, lat2, lon2):
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
+KAKAO_API_KEY = "ee3375b0678c5293ac9d180f13e2bbbe"
+
+
 def load_api_key():
-    key = os.environ.get("KAKAO_API_KEY")
-    if key:
-        return key
-    env_path = Path(__file__).parent / ".env"
-    if env_path.exists():
-        for line in env_path.read_text().splitlines():
-            line = line.strip()
-            if line.startswith("KAKAO_API_KEY="):
-                return line.split("=", 1)[1].strip().strip('"').strip("'")
-    print("KAKAO_API_KEY가 없습니다. .env 파일에 설정해주세요.")
-    sys.exit(1)
+    return KAKAO_API_KEY
 
 
 class KakaoLocalClient:
